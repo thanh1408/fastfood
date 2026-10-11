@@ -26,7 +26,9 @@ public class SecurityConfig {
                         )
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/categories/**")
+                        .requestMatchers("/api/v1/categories/**" ,
+                                         "/api/v1/products/**",
+                                           "/api/v1/auth/register")
                         .permitAll()
                         .anyRequest()
                         .authenticated()
