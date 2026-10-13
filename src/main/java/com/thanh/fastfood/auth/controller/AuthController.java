@@ -1,5 +1,8 @@
+
 package com.thanh.fastfood.auth.controller;
 
+import com.thanh.fastfood.auth.dto.LoginRequest;
+import com.thanh.fastfood.auth.dto.LoginResponse;
 import com.thanh.fastfood.auth.dto.RegisterRequest;
 import com.thanh.fastfood.auth.dto.UserResponse;
 import com.thanh.fastfood.auth.service.AuthService;
@@ -21,5 +24,12 @@ public class AuthController {
             @Valid @RequestBody RegisterRequest request
     ) {
         return authService.register(request);
+    }
+
+    @PostMapping("/login")
+    public LoginResponse login(
+            @Valid @RequestBody LoginRequest request
+    ) {
+        return authService.login(request);
     }
 }
