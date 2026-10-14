@@ -1,0 +1,5 @@
+
+security:
+  jwt:
+    secret: ${JWT_SECRET:VGhpc0lzQVRlc3RTZWNyZXRLZXlGb3JGdW1teUZhc3Rmb29kQXBwMTIzNDU2}
+    expiration-ms: 900000
