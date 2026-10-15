@@ -7,4 +7,6 @@ import com.thanh.fastfood.order.dto.OrderResponse;
 public interface OrderService {
 
     OrderResponse createOrder(CreateOrderRequest request);
+
+    OrderResponse getOrderById(Long orderId);
 }

@@ -14,12 +14,15 @@ import com.thanh.fastfood.order.repository.OrderItemRepository;
 import com.thanh.fastfood.order.repository.OrderRepository;
 import com.thanh.fastfood.product.entity.Product;
 import com.thanh.fastfood.product.repository.ProductRepository;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.Objects;
 
 @Service
 public class OrderServiceImpl implements OrderService {
@@ -140,5 +143,76 @@ public class OrderServiceImpl implements OrderService {
                 savedOrder.getCreateAt()
         );
     }
+
+
+    @Override
+    @Transactional(readOnly = true)
+    public OrderResponse getOrderById(Long orderId) {
+
+        // 1. Tìm đơn hàng
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Không tìm thấy đơn hàng ID: " + orderId
+                ));
+
+        // 2. Lấy người dùng đang đăng nhập
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null
+                || !authentication.isAuthenticated()
+                || authentication.getName() == null) {
+            throw new AccessDeniedException("Bạn chưa đăng nhập");
+        }
+
+        String email = authentication.getName();
+
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(authority ->
+                        authority.getAuthority().equals("ROLE_ADMIN"));
+
+        boolean isOwner = order.getUser() != null
+                && Objects.equals(
+                order.getUser().getEmail(),
+                email
+        );
+
+        // 3. Chỉ ADMIN hoặc chủ đơn hàng được xem
+        if (!isAdmin && !isOwner) {
+            throw new AccessDeniedException(
+                    "Bạn không có quyền xem đơn hàng này"
+            );
+        }
+
+        // 4. Lấy các dòng sản phẩm
+        List<OrderItemResponse> itemResponses =
+                orderItemRepository.findByOrderId(orderId)
+                        .stream()
+                        .map(this::toOrderItemResponse)
+                        .toList();
+
+        // 5. Chuyển Order thành response DTO
+        return new OrderResponse(
+                order.getId(),
+                order.getDeliveryAddress(),
+                order.getStatus(),
+                order.getTotalAmount(),
+                itemResponses,
+                order.getCreateAt()
+        );
+    }
+
+    private OrderItemResponse toOrderItemResponse(OrderItem item) {
+        return new OrderItemResponse(
+                item.getProduct().getId(),
+                item.getProduct().getName(),
+                item.getQuantity(),
+                item.getUnitPrice(),
+                item.getUnitPrice().multiply(
+                        java.math.BigDecimal.valueOf(item.getQuantity())
+                )
+        );
+    }
+
 
 }
