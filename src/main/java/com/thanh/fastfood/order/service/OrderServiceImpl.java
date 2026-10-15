@@ -7,6 +7,7 @@ import com.thanh.fastfood.common.exception.ResourceNotFoundException;
 import com.thanh.fastfood.order.dto.CreateOrderRequest;
 import com.thanh.fastfood.order.dto.OrderItemResponse;
 import com.thanh.fastfood.order.dto.OrderResponse;
+import com.thanh.fastfood.order.dto.OrderSummaryResponse;
 import com.thanh.fastfood.order.entity.Order;
 import com.thanh.fastfood.order.entity.OrderItem;
 import com.thanh.fastfood.order.entity.OrderStatus;
@@ -14,6 +15,8 @@ import com.thanh.fastfood.order.repository.OrderItemRepository;
 import com.thanh.fastfood.order.repository.OrderRepository;
 import com.thanh.fastfood.product.entity.Product;
 import com.thanh.fastfood.product.repository.ProductRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -213,6 +216,36 @@ public class OrderServiceImpl implements OrderService {
                 )
         );
     }
+
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<OrderSummaryResponse> getMyOrders(Pageable pageable) {
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null
+                || !authentication.isAuthenticated()
+                || authentication.getName() == null) {
+            throw new org.springframework.security.access.AccessDeniedException(
+                    "Bạn cần đăng nhập để xem lịch sử đơn hàng"
+            );
+        }
+
+        return orderRepository
+                .findByUserEmailOrderByCreateAtDesc(
+                        authentication.getName(),
+                        pageable
+                )
+                .map(order -> new OrderSummaryResponse(
+                        order.getId(),
+                        order.getDeliveryAddress(),
+                        order.getStatus(),
+                        order.getTotalAmount(),
+                        order.getCreateAt()
+                ));
+    }
+
 
 
 }
