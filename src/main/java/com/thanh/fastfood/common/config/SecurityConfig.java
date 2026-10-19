@@ -38,23 +38,60 @@ public class SecurityConfig {
                 )
 
                 .authorizeHttpRequests(auth -> auth
+
+                        // Các API đăng ký, đăng nhập được phép truy cập công khai
                         .requestMatchers(
                                 "/api/v1/auth/register",
                                 "/api/v1/auth/login",
                                 "/error"
                         ).permitAll()
 
+                        // Các API GET danh mục và sản phẩm được phép truy cập công khai
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/v1/categories/**",
                                 "/api/v1/products/**"
                         ).permitAll()
 
+                        // Chỉ ADMIN được tạo, sửa, xóa danh mục
                         .requestMatchers(
-                                "/api/v1/categories/**",
+                                HttpMethod.POST,
+                                "/api/v1/categories/**"
+                        ).hasRole("ADMIN")
+
+                        .requestMatchers(
+                                HttpMethod.PUT,
+                                "/api/v1/categories/**"
+                        ).hasRole("ADMIN")
+
+                        .requestMatchers(
+                                HttpMethod.DELETE,
+                                "/api/v1/categories/**"
+                        ).hasRole("ADMIN")
+
+                        // Chỉ ADMIN được tạo, sửa, xóa sản phẩm
+                        .requestMatchers(
+                                HttpMethod.POST,
                                 "/api/v1/products/**"
                         ).hasRole("ADMIN")
 
+                        .requestMatchers(
+                                HttpMethod.PUT,
+                                "/api/v1/products/**"
+                        ).hasRole("ADMIN")
+
+                        .requestMatchers(
+                                HttpMethod.DELETE,
+                                "/api/v1/products/**"
+                        ).hasRole("ADMIN")
+
+                        // Chỉ ADMIN được cập nhật trạng thái đơn hàng
+                        .requestMatchers(
+                                HttpMethod.PATCH,
+                                "/api/v1/orders/*/status"
+                        ).hasRole("ADMIN")
+
+                        // Các API còn lại yêu cầu đăng nhập
                         .anyRequest().authenticated()
                 )
 

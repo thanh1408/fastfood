@@ -3,11 +3,9 @@ package com.thanh.fastfood.order.service;
 
 import com.thanh.fastfood.auth.entity.User;
 import com.thanh.fastfood.auth.repository.UserRepository;
+import com.thanh.fastfood.common.exception.InvalidOrderStatusException;
 import com.thanh.fastfood.common.exception.ResourceNotFoundException;
-import com.thanh.fastfood.order.dto.CreateOrderRequest;
-import com.thanh.fastfood.order.dto.OrderItemResponse;
-import com.thanh.fastfood.order.dto.OrderResponse;
-import com.thanh.fastfood.order.dto.OrderSummaryResponse;
+import com.thanh.fastfood.order.dto.*;
 import com.thanh.fastfood.order.entity.Order;
 import com.thanh.fastfood.order.entity.OrderItem;
 import com.thanh.fastfood.order.entity.OrderStatus;
@@ -247,5 +245,40 @@ public class OrderServiceImpl implements OrderService {
     }
 
 
+    @Override
+    @Transactional
+    public void updateOrderStatus(
+            Long orderId,
+            UpdateOrderStatusRequest request
+    ) {
+        // 1. Tìm đơn hàng
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Không tìm thấy đơn hàng ID: " + orderId
+                ));
+
+        // 2. Lấy trạng thái hiện tại và trạng thái được yêu cầu
+        OrderStatus currentStatus = order.getStatus();
+        OrderStatus newStatus = request.status();
+
+        // 3. Nếu trạng thái không thay đổi, kết thúc thành công
+        if (currentStatus == newStatus) {
+            return;
+        }
+
+        // 4. Kiểm tra quy tắc chuyển trạng thái
+        if (!OrderStatusTransition.canTransition(currentStatus, newStatus)) {
+            throw new InvalidOrderStatusException(
+                    "Không thể chuyển trạng thái từ "
+                            + currentStatus
+                            + " sang "
+                            + newStatus
+            );
+        }
+
+        // 5. Cập nhật trạng thái
+        order.setStatus(newStatus);
+
+    }
 
 }

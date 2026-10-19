@@ -4,6 +4,7 @@ package com.thanh.fastfood.order.controller;
 import com.thanh.fastfood.order.dto.CreateOrderRequest;
 import com.thanh.fastfood.order.dto.OrderResponse;
 import com.thanh.fastfood.order.dto.OrderSummaryResponse;
+import com.thanh.fastfood.order.dto.UpdateOrderStatusRequest;
 import com.thanh.fastfood.order.service.OrderService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -50,5 +51,12 @@ public class OrderController {
         return orderService.getMyOrders(pageable);
     }
 
-
+    @PatchMapping("/{id}/status")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void updateOrderStatus(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateOrderStatusRequest request
+    ) {
+        orderService.updateOrderStatus(id, request);
+    }
 }
